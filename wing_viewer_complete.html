@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Wing Assembly 3D Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 320px;
+            backdrop-filter: blur(10px);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        #controls h2 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        
+        .control-group {
+            margin: 12px 0;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .control-group input[type="range"] {
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        .control-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .value-display {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+        }
+        
+        #info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #333;
+            font-size: 13px;
+            max-width: 350px;
+        }
+        
+        #info h3 {
+            margin: 0 0 8px 0;
+            color: #667eea;
+            font-size: 16px;
+        }
+        
+        #info p {
+            margin: 5px 0;
+            line-height: 1.5;
+        }
+        
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+        }
+        
+        .spec-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .spec-value {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px 50px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 15px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .section-title {
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container"></div>
+        
+        <div id="loading">
+            <div>Loading Wing Assembly...</div>
+            <div class="spinner"></div>
+        </div>
+        
+        <div id="controls">
+            <h2>🛩️ Wing Controls</h2>
+            
+            <div class="section-title">Visibility</div>
+            <div class="control-group">
+                <label>
+                    <input type="checkbox" id="showRibs" checked> Show Ribs
+                </label>
+                <label>
+                    <input type="checkbox" id="showHoles" checked> Show Lightening Holes
+                </label>
+                <label>
+                    <input type="checkbox" id="showSpars" checked> Show Spars
+                </label>
+                <label>
+                    <input type="checkbox" id="showSkin" checked> Show Wing Skin
+                </label>
+            </div>
+            
+            <div class="section-title">Skin Appearance</div>
+            <div class="control-group">
+                <label>
+                    Skin Opacity: <span class="value-display" id="skinOpacityValue">0.90</span>
+                </label>
+                <input type="range" id="skinOpacity" min="0.1" max="1.0" value="0.90" step="0.05">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    Skin Color:
+                </label>
+                <select id="skinColor" style="width: 100%; padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+                    <option value="0xcccccc">Silver</option>
+                    <option value="0xffffff">White</option>
+                    <option value="0x88ddff" selected>Light Blue</option>
+                    <option value="0xff8844">Orange</option>
+                    <option value="0x44ff88">Green</option>
+                    <option value="0xffdd44">Yellow</option>
+                </select>
+            </div>
+            
+            <div class="section-title">Wing Dimensions</div>
+            <div class="control-group">
+                <label>
+                    Number of Ribs: <span class="value-display" id="ribCountValue">8</span>
+                </label>
+                <input type="range" id="ribCount" min="4" max="16" value="8" step="1">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    Wingspan: <span class="value-display" id="wingspanValue">2000mm</span>
+                </label>
+                <input type="range" id="wingspan" min="1000" max="4000" value="2000" step="100">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    Root Chord: <span class="value-display" id="chordValue">800mm</span>
+                </label>
+                <input type="range" id="chord" min="400" max="1200" value="800" step="50">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    Taper Ratio: <span class="value-display" id="taperValue">0.6</span>
+                </label>
+                <input type="range" id="taper" min="0.4" max="1.0" value="0.6" step="0.05">
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button id="resetView">Reset View</button>
+                <button id="regenerate">Regenerate</button>
+            </div>
+        </div>
+        
+        <div id="info">
+            <h3>📐 Wing Specifications</h3>
+            <div class="spec-item">
+                <span class="spec-label">Airfoil:</span>
+                <span class="spec-value">NACA 2412</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Material:</span>
+                <span class="spec-value">Aluminum 2mm</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Lightening Holes:</span>
+                <span class="spec-value">Ø50mm</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Spars:</span>
+                <span class="spec-value">2 (Front & Rear)</span>
+            </div>
+            <p style="margin-top: 12px; font-size: 12px; color: #888;">
+                🖱️ <strong>Controls:</strong> Left-click drag to rotate, Right-click drag to pan, Scroll to zoom
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // NACA 4-digit airfoil generator
+        function generateNACA4Digit(number, nPoints = 100) {
+            const m = parseInt(number[0]) / 100.0;
+            const p = parseInt(number[1]) / 10.0;
+            const t = parseInt(number.slice(2, 4)) / 100.0;
+            
+            const beta = [];
+            for (let i = 0; i < nPoints; i++) {
+                beta.push(i * Math.PI / (nPoints - 1));
+            }
+            
+            const x = beta.map(b => (1 - Math.cos(b)) / 2);
+            
+            const yt = x.map(xi => 5 * t * (
+                0.2969 * Math.sqrt(xi) - 
+                0.1260 * xi - 
+                0.3516 * xi * xi + 
+                0.2843 * xi * xi * xi - 
+                0.1015 * xi * xi * xi * xi
+            ));
+            
+            const yc = [];
+            const dycDx = [];
+            
+            for (let i = 0; i < x.length; i++) {
+                if (x[i] < p && p > 0) {
+                    yc[i] = m / (p * p) * (2 * p * x[i] - x[i] * x[i]);
+                    dycDx[i] = 2 * m / (p * p) * (p - x[i]);
+                } else if (p > 0) {
+                    yc[i] = m / ((1 - p) * (1 - p)) * ((1 - 2 * p) + 2 * p * x[i] - x[i] * x[i]);
+                    dycDx[i] = 2 * m / ((1 - p) * (1 - p)) * (p - x[i]);
+                } else {
+                    yc[i] = 0;
+                    dycDx[i] = 0;
+                }
+            }
+            
+            const theta = dycDx.map(d => Math.atan(d));
+            
+            const xu = x.map((xi, i) => xi - yt[i] * Math.sin(theta[i]));
+            const yu = yc.map((yi, i) => yi + yt[i] * Math.cos(theta[i]));
+            const xl = x.map((xi, i) => xi + yt[i] * Math.sin(theta[i]));
+            const yl = yc.map((yi, i) => yi - yt[i] * Math.cos(theta[i]));
+            
+            const xAirfoil = [...xu.reverse(), ...xl.slice(1)];
+            const yAirfoil = [...yu.reverse(), ...yl.slice(1)];
+            
+            return { x: xAirfoil, y: yAirfoil };
+        }
+
+        // Wing Assembly Generator
+        class WingAssembly {
+            constructor(params) {
+                this.params = params;
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 10000);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                
+                this.groups = {
+                    ribs: new THREE.Group(),
+                    holes: new THREE.Group(),
+                    spars: new THREE.Group(),
+                    skin: new THREE.Group()
+                };
+                
+                this.skinColor = 0x88ddff;
+                this.skinOpacity = 0.90;
+                
+                this.init();
+            }
+            
+            init() {
+                // Setup renderer
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setClearColor(0x000000, 0);
+                document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+                
+                // Setup camera
+                this.camera.position.set(1500, 1200, 1500);
+                this.camera.lookAt(0, 0, 0);
+                
+                // Setup lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                this.scene.add(ambientLight);
+                
+                const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+                directionalLight1.position.set(1, 1, 1);
+                this.scene.add(directionalLight1);
+                
+                const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+                directionalLight2.position.set(-1, -1, -1);
+                this.scene.add(directionalLight2);
+                
+                const directionalLight3 = new THREE.DirectionalLight(0xffffff, 0.4);
+                directionalLight3.position.set(0, 1, 0);
+                this.scene.add(directionalLight3);
+                
+                // Add groups to scene
+                Object.values(this.groups).forEach(group => this.scene.add(group));
+                
+                // Add grid helper
+                const gridHelper = new THREE.GridHelper(3000, 30, 0x888888, 0x444444);
+                gridHelper.position.y = -200;
+                this.scene.add(gridHelper);
+                
+                // Setup controls
+                this.setupControls();
+                
+                // Generate wing
+                this.generateWing();
+                
+                // Start animation
+                this.animate();
+                
+                // Hide loading
+                document.getElementById('loading').classList.add('hidden');
+            }
+            
+            setupControls() {
+                // Mouse controls
+                let isDragging = false;
+                let previousMousePosition = { x: 0, y: 0 };
+                let isRightClick = false;
+                
+                this.renderer.domElement.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    isRightClick = e.button === 2;
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+                
+                this.renderer.domElement.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+                    
+                    if (isRightClick) {
+                        // Pan
+                        this.camera.position.x -= deltaX * 2;
+                        this.camera.position.y += deltaY * 2;
+                    } else {
+                        // Rotate around origin
+                        const rotationSpeed = 0.005;
+                        const radius = Math.sqrt(
+                            this.camera.position.x ** 2 + 
+                            this.camera.position.z ** 2
+                        );
+                        
+                        const currentAngle = Math.atan2(this.camera.position.z, this.camera.position.x);
+                        const newAngle = currentAngle + deltaX * rotationSpeed;
+                        
+                        this.camera.position.x = radius * Math.cos(newAngle);
+                        this.camera.position.z = radius * Math.sin(newAngle);
+                        this.camera.position.y -= deltaY * 2;
+                        
+                        this.camera.lookAt(0, 0, 0);
+                    }
+                    
+                    previousMousePosition = { x: e.clientX, y: e.clientY };
+                });
+                
+                this.renderer.domElement.addEventListener('mouseup', () => {
+                    isDragging = false;
+                });
+                
+                this.renderer.domElement.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                });
+                
+                // Zoom with mouse wheel
+                this.renderer.domElement.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const zoomSpeed = 0.1;
+                    const direction = e.deltaY > 0 ? 1 : -1;
+                    
+                    const factor = 1 + direction * zoomSpeed;
+                    this.camera.position.multiplyScalar(factor);
+                });
+                
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+                
+                // UI controls
+                document.getElementById('showRibs').addEventListener('change', (e) => {
+                    this.groups.ribs.visible = e.target.checked;
+                });
+                
+                document.getElementById('showHoles').addEventListener('change', (e) => {
+                    this.groups.holes.visible = e.target.checked;
+                });
+                
+                document.getElementById('showSpars').addEventListener('change', (e) => {
+                    this.groups.spars.visible = e.target.checked;
+                });
+                
+                document.getElementById('showSkin').addEventListener('change', (e) => {
+                    this.groups.skin.visible = e.target.checked;
+                });
+                
+                document.getElementById('skinOpacity').addEventListener('input', (e) => {
+                    this.skinOpacity = parseFloat(e.target.value);
+                    document.getElementById('skinOpacityValue').textContent = this.skinOpacity.toFixed(2);
+                    this.updateSkinAppearance();
+                });
+                
+                document.getElementById('skinColor').addEventListener('change', (e) => {
+                    this.skinColor = parseInt(e.target.value);
+                    this.updateSkinAppearance();
+                });
+                
+                document.getElementById('ribCount').addEventListener('input', (e) => {
+                    document.getElementById('ribCountValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('wingspan').addEventListener('input', (e) => {
+                    document.getElementById('wingspanValue').textContent = e.target.value + 'mm';
+                });
+                
+                document.getElementById('chord').addEventListener('input', (e) => {
+                    document.getElementById('chordValue').textContent = e.target.value + 'mm';
+                });
+                
+                document.getElementById('taper').addEventListener('input', (e) => {
+                    document.getElementById('taperValue').textContent = parseFloat(e.target.value).toFixed(2);
+                });
+                
+                document.getElementById('resetView').addEventListener('click', () => {
+                    this.camera.position.set(1500, 1200, 1500);
+                    this.camera.lookAt(0, 0, 0);
+                });
+                
+                document.getElementById('regenerate').addEventListener('click', () => {
+                    this.params.nRibs = parseInt(document.getElementById('ribCount').value);
+                    this.params.wingspan = parseInt(document.getElementById('wingspan').value);
+                    this.params.chordLength = parseInt(document.getElementById('chord').value);
+                    this.params.taperRatio = parseFloat(document.getElementById('taper').value);
+                    this.generateWing();
+                });
+            }
+            
+            updateSkinAppearance() {
+                this.groups.skin.children.forEach(child => {
+                    if (child.material) {
+                        child.material.color.setHex(this.skinColor);
+                        child.material.opacity = this.skinOpacity;
+                        child.material.needsUpdate = true;
+                    }
+                });
+            }
+            
+            generateWing() {
+                // Clear existing geometry
+                Object.values(this.groups).forEach(group => {
+                    while (group.children.length > 0) {
+                        const child = group.children[0];
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                        group.remove(child);
+                    }
+                });
+                
+                // Generate airfoil profile
+                const airfoil = generateNACA4Digit('2412', 100);
+                
+                // Create ribs
+                const ribPositions = [];
+                for (let i = 0; i < this.params.nRibs; i++) {
+                    ribPositions.push(i * this.params.wingspan / (this.params.nRibs - 1));
+                }
+                
+                const allRibs = [];
+                
+                ribPositions.forEach((spanPos, index) => {
+                    const taperFactor = 1.0 - (1 - this.params.taperRatio) * (spanPos / this.params.wingspan);
+                    const localChord = this.params.chordLength * taperFactor;
+                    
+                    const xScaled = airfoil.x.map(x => x * localChord);
+                    const yScaled = airfoil.y.map(y => y * localChord);
+                    
+                    allRibs.push({
+                        spanPos,
+                        chord: localChord,
+                        x: xScaled,
+                        y: yScaled
+                    });
+                    
+                    // Create rib geometry
+                    const ribShape = new THREE.Shape();
+                    ribShape.moveTo(xScaled[0], yScaled[0]);
+                    for (let i = 1; i < xScaled.length; i++) {
+                        ribShape.lineTo(xScaled[i], yScaled[i]);
+                    }
+                    ribShape.closePath();
+                    
+                    const ribGeometry = new THREE.ShapeGeometry(ribShape);
+                    const ribMaterial = new THREE.MeshPhongMaterial({ 
+                        color: 0x4488ff, 
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.5
+                    });
+                    
+                    const ribMesh = new THREE.Mesh(ribGeometry, ribMaterial);
+                    ribMesh.rotation.y = Math.PI / 2;
+                    ribMesh.position.z = spanPos - this.params.wingspan / 2;
+                    this.groups.ribs.add(ribMesh);
+                    
+                    // Create rib outline
+                    const ribOutlineGeometry = new THREE.BufferGeometry();
+                    const outlineVertices = [];
+                    for (let i = 0; i < xScaled.length; i++) {
+                        outlineVertices.push(0, xScaled[i], yScaled[i]);
+                    }
+                    outlineVertices.push(0, xScaled[0], yScaled[0]);
+                    
+                    ribOutlineGeometry.setAttribute('position', 
+                        new THREE.Float32BufferAttribute(outlineVertices, 3));
+                    
+                    const ribOutlineMaterial = new THREE.LineBasicMaterial({ 
+                        color: 0x0044aa,
+                        linewidth: 2
+                    });
+                    
+                    const ribOutline = new THREE.Line(ribOutlineGeometry, ribOutlineMaterial);
+                    ribOutline.position.z = spanPos - this.params.wingspan / 2;
+                    this.groups.ribs.add(ribOutline);
+                    
+                    // Add lightening holes (skip first and last rib)
+                    if (index > 0 && index < this.params.nRibs - 1) {
+                        const holeSpacing = 150 * taperFactor;
+                        const holeRadius = 25 * taperFactor;
+                        let xPos = 0.25 * localChord;
+                        
+                        while (xPos < 0.75 * localChord) {
+                            // Find y position at this x
+                            let centerY = 0;
+                            let count = 0;
+                            for (let i = 0; i < xScaled.length; i++) {
+                                if (Math.abs(xScaled[i] - xPos) < 20) {
+                                    centerY += yScaled[i];
+                                    count++;
+                                }
+                            }
+                            if (count > 0) centerY /= count;
+                            
+                            const holeGeometry = new THREE.CircleGeometry(holeRadius, 32);
+                            const holeMaterial = new THREE.MeshBasicMaterial({ 
+                                color: 0xff4444,
+                                side: THREE.DoubleSide
+                            });
+                            
+                            const hole = new THREE.Mesh(holeGeometry, holeMaterial);
+                            hole.rotation.y = Math.PI / 2;
+                            hole.position.set(0, xPos, centerY);
+                            hole.position.z += spanPos - this.params.wingspan / 2;
+                            this.groups.holes.add(hole);
+                            
+                            // Hole outline
+                            const holeOutlineGeometry = new THREE.RingGeometry(holeRadius * 0.95, holeRadius, 32);
+                            const holeOutlineMaterial = new THREE.MeshBasicMaterial({ 
+                                color: 0xcc0000,
+                                side: THREE.DoubleSide
+                            });
+                            
+                            const holeOutline = new THREE.Mesh(
+                                holeOutlineGeometry, holeOutlineMaterial
+                            );
+                            holeOutline.rotation.y = Math.PI / 2;
+                            holeOutline.position.copy(hole.position);
+                            this.groups.holes.add(holeOutline);
+                            
+                            xPos += holeSpacing;
+                        }
+                    }
+                });
+                
+                // Create spars
+                const sparPositions = [0.25, 0.75];
+                sparPositions.forEach(sparPos => {
+                    const sparPoints = [];
+                    
+                    allRibs.forEach(rib => {
+                        const xTarget = sparPos * rib.chord;
+                        
+                        // Find upper and lower points
+                        let upperY = -999999;
+                        let lowerY = 999999;
+                        
+                        for (let i = 0; i < rib.x.length; i++) {
+                            if (Math.abs(rib.x[i] - xTarget) < rib.chord * 0.05) {
+                                if (rib.y[i] > upperY) upperY = rib.y[i];
+                                if (rib.y[i] < lowerY) lowerY = rib.y[i];
+                            }
+                        }
+                        
+                        sparPoints.push({
+                            span: rib.spanPos,
+                            x: xTarget,
+                            upper: upperY,
+                            lower: lowerY
+                        });
+                    });
+                    
+                    // Draw spar lines
+                    const upperSparGeometry = new THREE.BufferGeometry();
+                    const lowerSparGeometry = new THREE.BufferGeometry();
+                    
+                    const upperVertices = [];
+                    const lowerVertices = [];
+                    
+                    sparPoints.forEach(point => {
+                        upperVertices.push(0, point.x, point.upper);
+                        lowerVertices.push(0, point.x, point.lower);
+                    });
+                    
+                    upperSparGeometry.setAttribute('position', 
+                        new THREE.Float32BufferAttribute(upperVertices, 3));
+                    lowerSparGeometry.setAttribute('position', 
+                        new THREE.Float32BufferAttribute(lowerVertices, 3));
+                    
+                    const sparMaterial = new THREE.LineBasicMaterial({ 
+                        color: 0x00cc00,
+                        linewidth: 3
+                    });
+                    
+                    const upperSpar = new THREE.Line(upperSparGeometry, sparMaterial);
+                    const lowerSpar = new THREE.Line(lowerSparGeometry, sparMaterial);
+                    
+                    upperSpar.position.z = -this.params.wingspan / 2;
+                    lowerSpar.position.z = -this.params.wingspan / 2;
+                    
+                    this.groups.spars.add(upperSpar);
+                    this.groups.spars.add(lowerSpar);
+                });
+                
+                // Create solid wing skin covering
+                for (let i = 0; i < allRibs.length - 1; i++) {
+                    const rib1 = allRibs[i];
+                    const rib2 = allRibs[i + 1];
+                    
+                    // Create high-resolution skin mesh
+                    const skinVertices = [];
+                    const skinIndices = [];
+                    
+                    // Use all airfoil points for smooth surface
+                    for (let j = 0; j < rib1.x.length - 1; j++) {
+                        const idx = skinVertices.length / 3;
+                        
+                        // Transform coordinates: x->chord, y->height, z->span
+                        // Four corners of quad
+                        skinVertices.push(
+                            rib1.x[j], rib1.y[j], rib1.spanPos - this.params.wingspan / 2,           // Point 1 on rib1
+                            rib1.x[j + 1], rib1.y[j + 1], rib1.spanPos - this.params.wingspan / 2,   // Point 2 on rib1
+                            rib2.x[j + 1], rib2.y[j + 1], rib2.spanPos - this.params.wingspan / 2,   // Point 3 on rib2
+                            rib2.x[j], rib2.y[j], rib2.spanPos - this.params.wingspan / 2            // Point 4 on rib2
+                        );
+                        
+                        // Two triangles forming the quad
+                        skinIndices.push(
+                            idx, idx + 1, idx + 2,
+                            idx, idx + 2, idx + 3
+                        );
+                    }
+                    
+                    const skinGeometry = new THREE.BufferGeometry();
+                    skinGeometry.setAttribute('position', 
+                        new THREE.Float32BufferAttribute(skinVertices, 3));
+                    skinGeometry.setIndex(skinIndices);
+                    skinGeometry.computeVertexNormals();
+                    
+                    const skinMaterial = new THREE.MeshPhongMaterial({
+                        color: this.skinColor,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: this.skinOpacity,
+                        shininess: 80,
+                        specular: 0x444444
+                    });
+                    
+                    const skinMesh = new THREE.Mesh(skinGeometry, skinMaterial);
+                    this.groups.skin.add(skinMesh);
+                }
+                
+                // Add wing tips (closing surfaces)
+                // Tip cap (at the end of wingspan)
+                const tip = allRibs[allRibs.length - 1];
+                const tipShape = new THREE.Shape();
+                tipShape.moveTo(tip.x[0], tip.y[0]);
+                for (let i = 1; i < tip.x.length; i++) {
+                    tipShape.lineTo(tip.x[i], tip.y[i]);
+                }
+                tipShape.closePath();
+                
+                const tipGeometry = new THREE.ShapeGeometry(tipShape);
+                const tipMaterial = new THREE.MeshPhongMaterial({
+                    color: this.skinColor,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: this.skinOpacity,
+                    shininess: 80
+                });
+                
+                const tipMesh = new THREE.Mesh(tipGeometry, tipMaterial);
+                tipMesh.position.z = tip.spanPos - this.params.wingspan / 2;
+                this.groups.skin.add(tipMesh);
+                
+                // Root cap (at the wing root)
+                const root = allRibs[0];
+                const rootShape = new THREE.Shape();
+                rootShape.moveTo(root.x[0], root.y[0]);
+                for (let i = 1; i < root.x.length; i++) {
+                    rootShape.lineTo(root.x[i], root.y[i]);
+                }
+                rootShape.closePath();
+                
+                const rootGeometry = new THREE.ShapeGeometry(rootShape);
+                const rootMaterial = new THREE.MeshPhongMaterial({
+                    color: this.skinColor,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: this.skinOpacity,
+                    shininess: 80
+                });
+                
+                const rootMesh = new THREE.Mesh(rootGeometry, rootMaterial);
+                rootMesh.position.z = root.spanPos - this.params.wingspan / 2;
+                this.groups.skin.add(rootMesh);
+            }
+            
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Initialize wing assembly
+        const params = {
+            chordLength: 800,
+            wingspan: 2000,
+            nRibs: 8,
+            taperRatio: 0.6,
+            holeDiameter: 50,
+            holeSpacing: 150
+        };
+
+        const wingAssembly = new WingAssembly(params);
+    </script>
+</body>
+</html>
