@@ -1,6 +1,6 @@
-# 🛩️ Multimodal Aircraft Wing Designer
+# 🛩️ AI4AeroDesigners
 
-**AI-Powered Wing Design with Voice, Text, and Sketch Input**
+**AI-Powered Multimodal Aircraft Wing Designer**
 
 A Next.js 14 web application that lets you design parametric aircraft wings using multimodal input (voice, text, and sketches) powered by Google Gemini 2.0 Flash.
 
@@ -20,7 +20,7 @@ A Next.js 14 web application that lets you design parametric aircraft wings usin
 ### Core Functionality
 - 🎤 **Voice Input** - Speak your wing design requirements  
 - ✍️ **Text Input** - Type detailed specifications  
-- ✏️ **Sketch Input** - Draw wing shapes on canvas  
+- ✏️ **Sketch Input** - Draw wing shapes on canvas with text labels
 - 🤖 **AI Generation** - Gemini 2.0 analyzes all inputs and generates parametric wings  
 - 🎯 **3D Visualization** - Real-time Three.js preview with COLLADA models  
 - 🏗️ **Structural Detail** - Ribs with lightening holes, spars, transparent skin  
@@ -40,7 +40,7 @@ A Next.js 14 web application that lets you design parametric aircraft wings usin
 4. **Provide Input:**
    - 🎤 Say: "I want 35 degree sweep angle"
    - ✍️ Type: "Design a high-performance fighter wing"
-   - ✏️ Draw: Sketch your wing shape
+   - ✏️ Draw: Sketch your wing shape with labels
 5. **Generate** - AI creates parametric wing design
 6. **Preview & Edit** - View in 3D with ribs, spars, and skin
 7. **Apply** - Wing updates on aircraft model
@@ -83,8 +83,8 @@ A Next.js 14 web application that lets you design parametric aircraft wings usin
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/wing-designer-app.git
-cd wing-designer-app
+git clone https://github.com/richasempire/AI4Humans.git
+cd AI4Humans
 
 # 2. Install dependencies
 npm install
