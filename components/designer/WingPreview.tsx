@@ -32,7 +32,7 @@ export default function WingPreview() {
         <ambientLight intensity={0.6} />
         <directionalLight position={[10, 10, 5]} intensity={1} castShadow />
         <directionalLight position={[-10, -10, -5]} intensity={0.3} />
-        <hemisphereLight skyColor="#ffffff" groundColor="#0a0a0a" intensity={0.3} />
+        <hemisphereLight args={["#ffffff", "#0a0a0a", 0.3]} />
 
         {/* Technical Grid - More Visible */}
         <Grid
