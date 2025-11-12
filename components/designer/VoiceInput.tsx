@@ -160,10 +160,10 @@ export default function VoiceInput() {
       <div className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-lg">
         <p className="font-semibold mb-1">💡 Example commands:</p>
         <ul className="space-y-1 text-xs">
-          <li>• "I want a wing with 30 degrees sweep and high aspect ratio"</li>
-          <li>• "Make it similar to a commercial airliner but smaller"</li>
-          <li>• "Add more dihedral angle for stability"</li>
-          <li>• "The wingspan should be about 2 meters"</li>
+          <li>• &quot;I want a wing with 30 degrees sweep and high aspect ratio&quot;</li>
+          <li>• &quot;Make it similar to a commercial airliner but smaller&quot;</li>
+          <li>• &quot;Add more dihedral angle for stability&quot;</li>
+          <li>• &quot;The wingspan should be about 2 meters&quot;</li>
         </ul>
       </div>
 

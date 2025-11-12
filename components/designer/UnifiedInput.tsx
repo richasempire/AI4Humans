@@ -89,7 +89,7 @@ export default function UnifiedInput() {
         ctx.fillText(label.text, label.x, label.y);
       });
     }
-  }, [showSketch]);
+  }, [showSketch, textLabels]);
 
   // Redraw labels when they change
   useEffect(() => {

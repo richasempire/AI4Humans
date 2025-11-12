@@ -17,17 +17,17 @@ export default function AircraftModel({ onWingClick }: AircraftModelProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { selectedAircraft, wingParameters } = useAircraftStore();
 
+  // Gentle rotation animation - must be called before any early returns
+  useFrame((state) => {
+    if (groupRef.current && selectedAircraft) {
+      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.1;
+    }
+  });
+
   if (!selectedAircraft) return null;
 
   const config = aircraftConfigs[selectedAircraft];
   const wing = wingParameters || config.defaultWing;
-
-  // Gentle rotation animation
-  useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.1;
-    }
-  });
 
   return (
     <group ref={groupRef}>
