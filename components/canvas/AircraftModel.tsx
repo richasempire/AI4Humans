@@ -2,7 +2,7 @@
 
 import { useRef, Suspense } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Mesh } from "three";
+import { Mesh, Group } from "three";
 import { useAircraftStore } from "@/store/aircraftStore";
 import { aircraftConfigs } from "@/lib/aircraft-config";
 import ColladaModel from "./ColladaModel";
@@ -14,7 +14,7 @@ interface AircraftModelProps {
 }
 
 export default function AircraftModel({ onWingClick }: AircraftModelProps) {
-  const groupRef = useRef<THREE.Group>(null);
+  const groupRef = useRef<Group>(null);
   const { selectedAircraft, wingParameters } = useAircraftStore();
 
   // Gentle rotation animation - must be called before any early returns
