@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useLoader } from "@react-three/fiber";
+import { useLoader, ThreeEvent } from "@react-three/fiber";
 import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader.js";
 import * as THREE from "three";
 
@@ -51,7 +51,7 @@ export default function ColladaModel({
   };
 
   // Handle click - entire model opens designer
-  const handleClick = (event: THREE.Event) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     if (onWingClick) {
       onWingClick();
